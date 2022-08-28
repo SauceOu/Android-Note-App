@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">NoteApp</string>
+    <string name="pin_unpin">Pin/Unpin</string>
+    <string name="delete">Delete</string>
 </resources>

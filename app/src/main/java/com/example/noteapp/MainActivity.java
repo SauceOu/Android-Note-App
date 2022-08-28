@@ -11,8 +11,11 @@ import androidx.room.Room;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.PopupMenu;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.example.noteapp.Adapters.NotesListAdapter;
 import com.example.noteapp.Database.RoomDB;
@@ -22,13 +25,14 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener{
     RecyclerView recyclerView;
     NotesListAdapter notesListAdapter;
     List<Notes> notes = new ArrayList<>();
     RoomDB database;
     FloatingActionButton fab_add;
     SearchView searchView_home;
+    Notes seletedNote;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,7 +122,46 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onLongClick(Notes notes, CardView cardView) {
-
+            seletedNote = new Notes();
+            seletedNote = notes;
+            showPopup(cardView);
         }
     };
+
+    private void showPopup(CardView cardView) {
+        PopupMenu popupMenu = new PopupMenu(this, cardView);
+        popupMenu.setOnMenuItemClickListener(this);
+        popupMenu.inflate(R.menu.popup_menu);
+        popupMenu.show();
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem menuItem) {
+        switch (menuItem.getItemId()) {
+            case R.id.pin:
+                if (seletedNote.isPinned()) {
+                    database.mainDAO().pin(seletedNote.getID(), false);
+                    Toast.makeText(MainActivity.this, "UNPINNED!", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    database.mainDAO().pin(seletedNote.getID(), true);
+                    Toast.makeText(MainActivity.this, "PINNED!", Toast.LENGTH_SHORT).show();
+                }
+
+                notes.clear();
+                notes.addAll(database.mainDAO().getAll());
+                notesListAdapter.notifyDataSetChanged();
+                return true;
+
+            case R.id.delete:
+                database.mainDAO().delete(seletedNote);
+                notes.remove(seletedNote);
+                notesListAdapter.notifyDataSetChanged();
+                Toast.makeText(MainActivity.this, "NOTE DELETED!", Toast.LENGTH_SHORT).show();
+                return true;
+
+            default:
+                return false;
+        }
+    }
 }
